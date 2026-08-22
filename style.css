@@ -56,3 +56,27 @@ h1 {
 #startButton:hover {
   background: #16a34a;
 }
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 15px;
+}
+
+.controls button {
+  width: 100px;
+  height: 55px;
+  font-size: 28px;
+  border: none;
+  border-radius: 12px;
+  background: #333;
+  color: white;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.controls button:active {
+  transform: scale(0.95);
+  background: #555;
+}
