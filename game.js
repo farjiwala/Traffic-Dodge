@@ -27,6 +27,9 @@ const difficultyButtons =
 const menuHighScore =
   document.getElementById("menuHighScore");
 
+const menuBestScore =
+  document.getElementById("menuBestScore");
+
 const scoreText =
   document.getElementById("score");
 
@@ -94,6 +97,9 @@ let highScore =
   ) || 0;
 
 menuHighScore.textContent =
+  highScore;
+
+menuBestScore.textContent =
   highScore;
 
 highScoreText.textContent =
