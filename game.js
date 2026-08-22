@@ -256,7 +256,7 @@ function resetGame() {
 
     height: 80,
 
-    speed: 7
+    speed: 12
   };
 
 
@@ -267,7 +267,7 @@ function resetGame() {
 
   score = 0;
 
-  lives = 3;
+  lives = 4;
 
   coinCount = 0;
 
