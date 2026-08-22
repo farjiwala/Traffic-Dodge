@@ -6,24 +6,39 @@
   <title>Traffic Dodge</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
   <div class="game-container">
+
     <h1>🚗 Traffic Dodge</h1>
 
-    <div class="score">
-      Score: <span id="score">0</span>
+    <div class="game-info">
+      <div>🏆 Score: <span id="score">0</span></div>
+      <div>❤️ Lives: <span id="lives">3</span></div>
+      <div>🪙 Coins: <span id="coins">0</span></div>
     </div>
 
-    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div class="high-score">
+      Best: <span id="highScore">0</span>
+    </div>
+
+    <canvas
+      id="gameCanvas"
+      width="400"
+      height="600">
+    </canvas>
 
     <button id="startButton">START GAME</button>
 
-<div class="controls">
-  <button id="leftButton">⬅️</button>
-  <button id="rightButton">➡️</button>
-</div>
+    <div class="controls">
+      <button id="leftButton">⬅️</button>
+      <button id="rightButton">➡️</button>
+    </div>
+
+  </div>
 
   <script src="game.js"></script>
+
 </body>
 </html>
