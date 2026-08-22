@@ -11,28 +11,86 @@ const leftButton = document.getElementById("leftButton");
 const rightButton = document.getElementById("rightButton");
 
 let player;
-let enemies;
-let coins;
-let score;
-let lives;
-let coinCount;
-let highScore;
-let gameRunning;
+let enemies = [];
+let coins = [];
+
+let score = 0;
+let lives = 3;
+let coinCount = 0;
+
+let highScore =
+  Number(localStorage.getItem("trafficDodgeHighScore")) || 0;
+
+let gameRunning = false;
+let paused = false;
+
 let animationId;
 let roadOffset = 0;
+let hitCooldown = 0;
+
+let crashEffect = 0;
 
 const road = {
   x: 50,
   width: 300
 };
 
-// Load saved high score
-highScore = Number(localStorage.getItem("trafficDodgeHighScore")) || 0;
 
-highScoreText.textContent = highScore;
+// =========================
+// SOUND SYSTEM
+// =========================
+
+let audioContext = null;
+
+function initAudio() {
+  if (!audioContext) {
+    audioContext =
+      new (window.AudioContext ||
+        window.webkitAudioContext)();
+  }
+}
+
+function playSound(
+  frequency,
+  duration,
+  type = "sine",
+  volume = 0.08
+) {
+  if (!audioContext) {
+    return;
+  }
+
+  const oscillator =
+    audioContext.createOscillator();
+
+  const gain =
+    audioContext.createGain();
+
+  oscillator.type = type;
+  oscillator.frequency.value = frequency;
+
+  gain.gain.value = volume;
+
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+
+  oscillator.start();
+
+  gain.gain.exponentialRampToValueAtTime(
+    0.001,
+    audioContext.currentTime + duration
+  );
+
+  oscillator.stop(
+    audioContext.currentTime + duration
+  );
+}
 
 
-// Reset game
+// =========================
+// RESET
+// =========================
+
 function resetGame() {
 
   player = {
@@ -51,18 +109,35 @@ function resetGame() {
   coinCount = 0;
 
   roadOffset = 0;
+  hitCooldown = 0;
+  crashEffect = 0;
+
+  paused = false;
   gameRunning = true;
 
   scoreText.textContent = score;
   livesText.textContent = lives;
   coinsText.textContent = coinCount;
+  highScoreText.textContent = highScore;
 }
 
 
-// Draw road
+// =========================
+// ROAD
+// =========================
+
 function drawRoad() {
 
-  // Road
+  ctx.fillStyle = "#174d25";
+
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
   ctx.fillStyle = "#555";
 
   ctx.fillRect(
@@ -73,26 +148,7 @@ function drawRoad() {
   );
 
 
-  // Grass
-  ctx.fillStyle = "#174d25";
-
-  ctx.fillRect(
-    0,
-    0,
-    road.x,
-    canvas.height
-  );
-
-  ctx.fillRect(
-    road.x + road.width,
-    0,
-    canvas.width - road.x - road.width,
-    canvas.height
-  );
-
-
-  // Road edges
-  ctx.fillStyle = "#eee";
+  ctx.fillStyle = "#ffffff";
 
   ctx.fillRect(
     road.x,
@@ -109,7 +165,6 @@ function drawRoad() {
   );
 
 
-  // Moving road
   roadOffset += 8;
 
   if (roadOffset >= 60) {
@@ -117,10 +172,11 @@ function drawRoad() {
   }
 
 
-  ctx.strokeStyle = "white";
+  ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 5;
 
   ctx.setLineDash([30, 30]);
+
   ctx.lineDashOffset = roadOffset;
 
 
@@ -141,6 +197,7 @@ function drawRoad() {
 
 
   ctx.setLineDash([]);
+
   ctx.lineDashOffset = 0;
 
 
@@ -148,39 +205,44 @@ function drawRoad() {
 }
 
 
-// Trees
+// =========================
+// TREES
+// =========================
+
 function drawTrees() {
 
-  const treePositions = [80, 320];
+  const positions = [80, 320];
 
-  treePositions.forEach(x => {
+  positions.forEach(x => {
 
-    for (let y = -50; y < canvas.height; y += 120) {
+    for (
+      let y = -100;
+      y < canvas.height + 100;
+      y += 130
+    ) {
 
-      const adjustedY =
-        (y + roadOffset * 2) % 700 - 50;
+      const treeY =
+        (y + roadOffset * 2) % 700 - 100;
 
 
-      // Tree trunk
       ctx.fillStyle = "#795548";
 
       ctx.fillRect(
         x - 5,
-        adjustedY + 25,
+        treeY + 25,
         10,
-        25
+        30
       );
 
 
-      // Leaves
       ctx.fillStyle = "#2e7d32";
 
       ctx.beginPath();
 
       ctx.arc(
         x,
-        adjustedY + 20,
-        22,
+        treeY + 20,
+        23,
         0,
         Math.PI * 2
       );
@@ -191,10 +253,20 @@ function drawTrees() {
 }
 
 
-// Player car
+// =========================
+// PLAYER
+// =========================
+
 function drawPlayer() {
 
-  // Body
+  if (
+    hitCooldown > 0 &&
+    Math.floor(hitCooldown / 5) % 2 === 0
+  ) {
+    return;
+  }
+
+
   ctx.fillStyle = "#1976d2";
 
   ctx.fillRect(
@@ -205,7 +277,6 @@ function drawPlayer() {
   );
 
 
-  // Roof
   ctx.fillStyle = "#1565c0";
 
   ctx.fillRect(
@@ -216,7 +287,6 @@ function drawPlayer() {
   );
 
 
-  // Windows
   ctx.fillStyle = "#b3e5fc";
 
   ctx.fillRect(
@@ -234,7 +304,6 @@ function drawPlayer() {
   );
 
 
-  // Wheels
   ctx.fillStyle = "#111";
 
   ctx.fillRect(
@@ -266,7 +335,6 @@ function drawPlayer() {
   );
 
 
-  // Headlights
   ctx.fillStyle = "#fff59d";
 
   ctx.fillRect(
@@ -285,13 +353,20 @@ function drawPlayer() {
 }
 
 
-// Create enemy
+// =========================
+// ENEMY
+// =========================
+
 function createEnemy() {
 
   const lanes = [75, 175, 275];
 
   const lane =
-    lanes[Math.floor(Math.random() * lanes.length)];
+    lanes[
+      Math.floor(
+        Math.random() * lanes.length
+      )
+    ];
 
 
   const colors = [
@@ -302,30 +377,44 @@ function createEnemy() {
   ];
 
 
+  // Difficulty increases with score
+  const difficulty =
+    Math.min(score * 0.08, 5);
+
+
   enemies.push({
 
     x: lane,
 
-    y: -90,
+    y: -100,
 
     width: 50,
 
     height: 80,
 
-    speed: 4 + Math.random() * 2,
+    speed:
+      4 +
+      Math.random() * 2 +
+      difficulty,
 
     color:
-      colors[Math.floor(Math.random() * colors.length)]
+      colors[
+        Math.floor(
+          Math.random() * colors.length
+        )
+      ]
   });
 }
 
 
-// Draw enemies
+// =========================
+// DRAW ENEMIES
+// =========================
+
 function drawEnemies() {
 
   enemies.forEach(enemy => {
 
-    // Body
     ctx.fillStyle = enemy.color;
 
     ctx.fillRect(
@@ -336,7 +425,6 @@ function drawEnemies() {
     );
 
 
-    // Roof
     ctx.fillStyle = "#222";
 
     ctx.fillRect(
@@ -347,7 +435,6 @@ function drawEnemies() {
     );
 
 
-    // Windows
     ctx.fillStyle = "#b3e5fc";
 
     ctx.fillRect(
@@ -365,7 +452,6 @@ function drawEnemies() {
     );
 
 
-    // Wheels
     ctx.fillStyle = "#111";
 
     ctx.fillRect(
@@ -399,13 +485,20 @@ function drawEnemies() {
 }
 
 
-// Create coin
+// =========================
+// COIN
+// =========================
+
 function createCoin() {
 
   const lanes = [75, 175, 275];
 
   const lane =
-    lanes[Math.floor(Math.random() * lanes.length)];
+    lanes[
+      Math.floor(
+        Math.random() * lanes.length
+      )
+    ];
 
 
   coins.push({
@@ -414,14 +507,17 @@ function createCoin() {
 
     y: -30,
 
-    radius: 12,
+    radius: 13,
 
-    speed: 4.5
+    speed: 4
   });
 }
 
 
-// Draw coins
+// =========================
+// DRAW COINS
+// =========================
+
 function drawCoins() {
 
   coins.forEach(coin => {
@@ -442,6 +538,7 @@ function drawCoins() {
 
 
     ctx.strokeStyle = "#fff176";
+
     ctx.lineWidth = 3;
 
     ctx.stroke();
@@ -449,7 +546,7 @@ function drawCoins() {
 
     ctx.fillStyle = "#8d6e00";
 
-    ctx.font = "bold 14px Arial";
+    ctx.font = "bold 16px Arial";
 
     ctx.textAlign = "center";
 
@@ -464,7 +561,10 @@ function drawCoins() {
 }
 
 
-// Update enemies
+// =========================
+// UPDATE ENEMIES
+// =========================
+
 function updateEnemies() {
 
   enemies.forEach(enemy => {
@@ -489,7 +589,10 @@ function updateEnemies() {
 }
 
 
-// Update coins
+// =========================
+// UPDATE COINS
+// =========================
+
 function updateCoins() {
 
   coins.forEach(coin => {
@@ -498,118 +601,179 @@ function updateCoins() {
   });
 
 
-  coins = coins.filter(coin => {
-
-    if (coin.y > canvas.height + 30) {
-
-      return false;
-    }
-
-    return true;
-  });
+  coins = coins.filter(
+    coin =>
+      coin.y < canvas.height + 50
+  );
 }
 
 
-// Collision helper
+// =========================
+// COLLISION
+// =========================
+
 function isColliding(a, b) {
 
   return (
+
     a.x < b.x + b.width &&
+
     a.x + a.width > b.x &&
+
     a.y < b.y + b.height &&
+
     a.y + a.height > b.y
   );
 }
 
 
-// Enemy collision
+// =========================
+// ENEMY COLLISION
+// =========================
+
 function checkEnemyCollision() {
 
-  for (let i = enemies.length - 1; i >= 0; i--) {
+  if (hitCooldown > 0) {
+    return;
+  }
+
+
+  for (
+    let i = 0;
+    i < enemies.length;
+    i++
+  ) {
 
     const enemy = enemies[i];
 
 
-    if (isColliding(player, enemy)) {
+    if (
+      isColliding(
+        player,
+        enemy
+      )
+    ) {
 
       enemies.splice(i, 1);
 
+
       lives--;
 
-      livesText.textContent = lives;
+      livesText.textContent =
+        lives;
+
+
+      hitCooldown = 120;
+
+      crashEffect = 20;
+
+
+      playSound(
+        100,
+        0.35,
+        "sawtooth",
+        0.15
+      );
+
+
+      player.x = 175;
 
 
       if (lives <= 0) {
 
         endGame();
-
-      } else {
-
-        player.x = 175;
       }
+
+
+      return;
     }
   }
 }
 
 
-// Coin collision
+// =========================
+// COIN COLLISION
+// =========================
+
 function checkCoinCollision() {
 
-  for (let i = coins.length - 1; i >= 0; i--) {
+  for (
+    let i = coins.length - 1;
+    i >= 0;
+    i--
+  ) {
 
     const coin = coins[i];
 
 
     const coinBox = {
 
-      x: coin.x - coin.radius,
+      x:
+        coin.x -
+        coin.radius,
 
-      y: coin.y - coin.radius,
+      y:
+        coin.y -
+        coin.radius,
 
-      width: coin.radius * 2,
+      width:
+        coin.radius * 2,
 
-      height: coin.radius * 2
+      height:
+        coin.radius * 2
     };
 
 
-    if (isColliding(player, coinBox)) {
+    if (
+      isColliding(
+        player,
+        coinBox
+      )
+    ) {
 
       coins.splice(i, 1);
 
+
       coinCount++;
 
-      coinsText.textContent = coinCount;
+      coinsText.textContent =
+        coinCount;
+
 
       score += 5;
 
-      scoreText.textContent = score;
+      scoreText.textContent =
+        score;
+
+
+      playSound(
+        800,
+        0.12,
+        "sine",
+        0.1
+      );
     }
   }
 }
 
 
-// End game
-function endGame() {
+// =========================
+// CRASH EFFECT
+// =========================
 
-  gameRunning = false;
+function drawCrashEffect() {
 
-  cancelAnimationFrame(animationId);
-
-
-  if (score > highScore) {
-
-    highScore = score;
-
-    localStorage.setItem(
-      "trafficDodgeHighScore",
-      highScore
-    );
-
-    highScoreText.textContent = highScore;
+  if (crashEffect <= 0) {
+    return;
   }
 
 
-  ctx.fillStyle = "rgba(0, 0, 0, 0.78)";
+  ctx.save();
+
+  ctx.fillStyle =
+    `rgba(255, 80, 0, ${
+      crashEffect / 30
+    })`;
 
   ctx.fillRect(
     0,
@@ -619,48 +783,141 @@ function endGame() {
   );
 
 
-  ctx.fillStyle = "white";
+  ctx.restore();
 
-  ctx.textAlign = "center";
+  crashEffect--;
+}
 
 
-  ctx.font = "40px Arial";
+// =========================
+// GAME OVER
+// =========================
+
+function endGame() {
+
+  gameRunning = false;
+
+  paused = false;
+
+  cancelAnimationFrame(
+    animationId
+  );
+
+
+  if (
+    score >
+    highScore
+  ) {
+
+    highScore =
+      score;
+
+    localStorage.setItem(
+      "trafficDodgeHighScore",
+      highScore
+    );
+  }
+
+
+  highScoreText.textContent =
+    highScore;
+
+
+  ctx.fillStyle =
+    "rgba(0, 0, 0, 0.82)";
+
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  ctx.fillStyle =
+    "white";
+
+  ctx.textAlign =
+    "center";
+
+
+  ctx.font =
+    "40px Arial";
 
   ctx.fillText(
     "GAME OVER",
     canvas.width / 2,
-    240
+    220
   );
 
 
-  ctx.font = "24px Arial";
+  ctx.font =
+    "24px Arial";
 
   ctx.fillText(
     `Score: ${score}`,
     canvas.width / 2,
-    290
+    275
   );
 
 
   ctx.fillText(
-    `🪙 Coins: ${coinCount}`,
+    `Coins: ${coinCount}`,
     canvas.width / 2,
-    330
+    315
   );
 
 
   ctx.fillText(
-    `🏆 Best: ${highScore}`,
+    `Best: ${highScore}`,
     canvas.width / 2,
-    370
+    355
   );
 
 
-  startButton.textContent = "PLAY AGAIN";
+  startButton.textContent =
+    "PLAY AGAIN";
 }
 
 
-// Game loop
+// =========================
+// PAUSE SCREEN
+// =========================
+
+function drawPauseScreen() {
+
+  ctx.fillStyle =
+    "rgba(0, 0, 0, 0.65)";
+
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  ctx.fillStyle =
+    "white";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.font =
+    "42px Arial";
+
+  ctx.fillText(
+    "PAUSED",
+    canvas.width / 2,
+    canvas.height / 2
+  );
+}
+
+
+// =========================
+// GAME LOOP
+// =========================
+
 function gameLoop() {
 
   if (!gameRunning) {
@@ -676,105 +933,239 @@ function gameLoop() {
   );
 
 
-  drawRoad();
+  if (!paused) {
 
-  updateEnemies();
+    if (hitCooldown > 0) {
+      hitCooldown--;
+    }
 
-  updateCoins();
 
-  drawEnemies();
+    drawRoad();
 
-  drawCoins();
+    updateEnemies();
 
-  drawPlayer();
+    updateCoins();
 
-  checkEnemyCollision();
+    drawEnemies();
 
-  checkCoinCollision();
+    drawCoins();
+
+    drawPlayer();
+
+    checkEnemyCollision();
+
+    checkCoinCollision();
+
+    drawCrashEffect();
+
+  } else {
+
+    drawRoad();
+
+    drawEnemies();
+
+    drawCoins();
+
+    drawPlayer();
+
+    drawPauseScreen();
+  }
 
 
   animationId =
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(
+      gameLoop
+    );
 }
 
 
-// Start game
+// =========================
+// START
+// =========================
+
 function startGame() {
 
-  cancelAnimationFrame(animationId);
+  initAudio();
+
+  if (
+    audioContext &&
+    audioContext.state ===
+      "suspended"
+  ) {
+
+    audioContext.resume();
+  }
+
+
+  cancelAnimationFrame(
+    animationId
+  );
+
 
   resetGame();
 
-  startButton.textContent = "RESTART";
+
+  startButton.textContent =
+    "PAUSE";
+
 
   gameLoop();
 }
 
 
-// Move left
-function moveLeft() {
+// =========================
+// PAUSE / RESUME
+// =========================
+
+function togglePause() {
 
   if (!gameRunning) {
     return;
   }
 
 
-  player.x -= player.speed;
+  paused =
+    !paused;
 
 
-  if (player.x < road.x) {
+  if (paused) {
 
-    player.x = road.x;
+    startButton.textContent =
+      "RESUME";
+
+  } else {
+
+    startButton.textContent =
+      "PAUSE";
   }
 }
 
 
-// Move right
-function moveRight() {
+// =========================
+// KEYBOARD
+// =========================
 
-  if (!gameRunning) {
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key ===
+      "ArrowLeft"
+    ) {
+
+      moveLeft();
+    }
+
+
+    if (
+      event.key ===
+      "ArrowRight"
+    ) {
+
+      moveRight();
+    }
+
+
+    if (
+      event.key ===
+      " "
+    ) {
+
+      togglePause();
+    }
+  }
+);
+
+
+// =========================
+// MOVE LEFT
+// =========================
+
+function moveLeft() {
+
+  if (
+    !gameRunning ||
+    paused
+  ) {
+
     return;
   }
 
 
-  player.x += player.speed;
+  player.x -=
+    player.speed;
 
 
   if (
-    player.x + player.width >
-    road.x + road.width
+    player.x <
+    road.x
   ) {
 
     player.x =
-      road.x + road.width - player.width;
+      road.x;
   }
 }
 
 
-// Keyboard controls
-document.addEventListener("keydown", event => {
+// =========================
+// MOVE RIGHT
+// =========================
 
-  if (event.key === "ArrowLeft") {
+function moveRight() {
+
+  if (
+    !gameRunning ||
+    paused
+  ) {
+
+    return;
+  }
+
+
+  player.x +=
+    player.speed;
+
+
+  if (
+    player.x +
+      player.width >
+    road.x +
+      road.width
+  ) {
+
+    player.x =
+      road.x +
+      road.width -
+      player.width;
+  }
+}
+
+
+// =========================
+// MOBILE CONTROLS
+// =========================
+
+leftButton.addEventListener(
+  "touchstart",
+  event => {
+
+    event.preventDefault();
+
     moveLeft();
   }
+);
 
+rightButton.addEventListener(
+  "touchstart",
+  event => {
 
-  if (event.key === "ArrowRight") {
+    event.preventDefault();
+
     moveRight();
   }
-});
-
-
-// Mobile controls
-leftButton.addEventListener(
-  "touchstart",
-  moveLeft
 );
 
-rightButton.addEventListener(
-  "touchstart",
-  moveRight
-);
 
 leftButton.addEventListener(
   "click",
@@ -787,30 +1178,78 @@ rightButton.addEventListener(
 );
 
 
-// Start button
+// =========================
+// START BUTTON
+// =========================
+
 startButton.addEventListener(
   "click",
-  startGame
+  () => {
+
+    if (!gameRunning) {
+
+      startGame();
+
+    } else {
+
+      togglePause();
+    }
+  }
 );
 
 
-// Enemy spawning
-setInterval(() => {
+// =========================
+// ENEMIES
+// =========================
 
-  if (gameRunning) {
+setInterval(
+  () => {
 
-    createEnemy();
-  }
+    if (
+      gameRunning &&
+      !paused
+    ) {
 
-}, 1000);
+      createEnemy();
+    }
+
+  },
+  1000
+);
 
 
-// Coin spawning
-setInterval(() => {
+// =========================
+// COINS
+// =========================
 
-  if (gameRunning) {
+setInterval(
+  () => {
 
-    createCoin();
-  }
+    if (
+      gameRunning &&
+      !paused
+    ) {
 
-}, 1800);
+      createCoin();
+    }
+
+  },
+  1200
+);
+
+
+// =========================
+// INITIAL SCREEN
+// =========================
+
+scoreText.textContent =
+  "0";
+
+livesText.textContent =
+  "3";
+
+coinsText.textContent =
+  "0";
+
+highScoreText.textContent =
+  highScore;
