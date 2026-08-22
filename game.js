@@ -18,6 +18,9 @@ const gameScreen =
 const playButton =
   document.getElementById("playButton");
 
+const countdown =
+  document.getElementById("countdown");
+
 const difficultyButtons =
   document.querySelectorAll(".difficulty");
 
@@ -47,7 +50,7 @@ const rightButton =
 
 
 /* =========================
-   GAME VARIABLES
+   VARIABLES
 ========================= */
 
 let player;
@@ -65,6 +68,8 @@ let coinCount = 0;
 let gameRunning = false;
 
 let paused = false;
+
+let countdownRunning = false;
 
 let animationId;
 
@@ -96,7 +101,7 @@ highScoreText.textContent =
 
 
 /* =========================
-   DIFFICULTY SETTINGS
+   DIFFICULTY
 ========================= */
 
 const difficultySettings = {
@@ -127,7 +132,9 @@ const difficultySettings = {
 ========================= */
 
 const road = {
+
   x: 50,
+
   width: 300
 };
 
@@ -149,6 +156,7 @@ function initAudio() {
         window.webkitAudioContext
       )();
   }
+
 }
 
 
@@ -163,13 +171,11 @@ function playSound(
     return;
   }
 
-
   const oscillator =
     audioContext.createOscillator();
 
   const gain =
     audioContext.createGain();
-
 
   oscillator.type =
     type;
@@ -177,10 +183,8 @@ function playSound(
   oscillator.frequency.value =
     frequency;
 
-
   gain.gain.value =
     volume;
-
 
   oscillator.connect(gain);
 
@@ -188,16 +192,13 @@ function playSound(
     audioContext.destination
   );
 
-
   oscillator.start();
-
 
   gain.gain.exponentialRampToValueAtTime(
     0.001,
     audioContext.currentTime +
       duration
   );
-
 
   oscillator.stop(
     audioContext.currentTime +
@@ -207,7 +208,7 @@ function playSound(
 
 
 /* =========================
-   DIFFICULTY SELECTION
+   DIFFICULTY BUTTONS
 ========================= */
 
 difficultyButtons.forEach(
@@ -223,25 +224,26 @@ difficultyButtons.forEach(
             item.classList.remove(
               "active"
             );
+
           }
         );
-
 
         button.classList.add(
           "active"
         );
 
-
         selectedDifficulty =
           button.dataset.level;
+
       }
     );
+
   }
 );
 
 
 /* =========================
-   RESET
+   RESET GAME
 ========================= */
 
 function resetGame() {
@@ -256,21 +258,18 @@ function resetGame() {
 
     height: 80,
 
-    speed: 16
+    speed: 20
   };
-
 
   enemies = [];
 
   coins = [];
 
-
   score = 0;
 
-  lives = 400;
+  lives = 3;
 
   coinCount = 0;
-
 
   roadOffset = 0;
 
@@ -280,9 +279,9 @@ function resetGame() {
 
   paused = false;
 
+  countdownRunning = false;
 
   gameRunning = true;
-
 
   scoreText.textContent =
     score;
@@ -299,7 +298,7 @@ function resetGame() {
 
 
 /* =========================
-   DRAW ROAD
+   ROAD
 ========================= */
 
 function drawRoad() {
@@ -315,8 +314,46 @@ function drawRoad() {
   );
 
 
+  /* grass stripes */
+
+  for (
+    let y = -60;
+    y < canvas.height + 60;
+    y += 60
+  ) {
+
+    const stripeY =
+      (
+        y +
+        roadOffset * 2
+      ) %
+        120 -
+      60;
+
+    ctx.fillStyle =
+      "#1d6b2d";
+
+    ctx.fillRect(
+      0,
+      stripeY,
+      50,
+      30
+    );
+
+    ctx.fillRect(
+      350,
+      stripeY,
+      50,
+      30
+    );
+
+  }
+
+
+  /* road */
+
   ctx.fillStyle =
-    "#555";
+    "#3d3d3d";
 
   ctx.fillRect(
     road.x,
@@ -326,8 +363,10 @@ function drawRoad() {
   );
 
 
+  /* road edges */
+
   ctx.fillStyle =
-    "#ffffff";
+    "#eeeeee";
 
   ctx.fillRect(
     road.x,
@@ -335,7 +374,6 @@ function drawRoad() {
     5,
     canvas.height
   );
-
 
   ctx.fillRect(
     road.x +
@@ -347,8 +385,9 @@ function drawRoad() {
   );
 
 
-  roadOffset += 8;
+  /* lane animation */
 
+  roadOffset += 8;
 
   if (
     roadOffset >= 60
@@ -362,7 +401,6 @@ function drawRoad() {
     "#ffffff";
 
   ctx.lineWidth = 5;
-
 
   ctx.setLineDash(
     [30, 30]
@@ -404,44 +442,43 @@ function drawRoad() {
 
   ctx.setLineDash([]);
 
-  ctx.lineDashOffset =
-    0;
+  ctx.lineDashOffset = 0;
 
 
-  drawTrees();
+  drawRoadsideObjects();
 }
 
 
 /* =========================
-   TREES
+   ROADSIDE OBJECTS
 ========================= */
 
-function drawTrees() {
+function drawRoadsideObjects() {
 
-  const positions =
-    [80, 320];
-
+  const positions = [
+    20,
+    380
+  ];
 
   positions.forEach(
     x => {
 
       for (
         let y = -100;
-        y <
-        canvas.height +
-          100;
+        y < canvas.height + 100;
         y += 130
       ) {
 
         const treeY =
           (
             y +
-            roadOffset *
-              2
+            roadOffset * 2
           ) %
             700 -
           100;
 
+
+        /* trunk */
 
         ctx.fillStyle =
           "#795548";
@@ -453,6 +490,8 @@ function drawTrees() {
           30
         );
 
+
+        /* leaves */
 
         ctx.fillStyle =
           "#2e7d32";
@@ -468,7 +507,9 @@ function drawTrees() {
         );
 
         ctx.fill();
+
       }
+
     }
   );
 }
@@ -484,14 +525,27 @@ function drawPlayer() {
     hitCooldown > 0 &&
     Math.floor(
       hitCooldown / 5
-    ) %
-      2 ===
-      0
+    ) % 2 === 0
   ) {
 
     return;
   }
 
+
+  /* shadow */
+
+  ctx.fillStyle =
+    "rgba(0,0,0,0.35)";
+
+  ctx.fillRect(
+    player.x + 5,
+    player.y + 7,
+    player.width,
+    player.height
+  );
+
+
+  /* body */
 
   ctx.fillStyle =
     "#1976d2";
@@ -504,6 +558,8 @@ function drawPlayer() {
   );
 
 
+  /* roof */
+
   ctx.fillStyle =
     "#1565c0";
 
@@ -515,6 +571,8 @@ function drawPlayer() {
   );
 
 
+  /* windows */
+
   ctx.fillStyle =
     "#b3e5fc";
 
@@ -525,7 +583,6 @@ function drawPlayer() {
     18
   );
 
-
   ctx.fillRect(
     player.x + 10,
     player.y + 35,
@@ -534,9 +591,10 @@ function drawPlayer() {
   );
 
 
+  /* wheels */
+
   ctx.fillStyle =
-    "#111";
-
+    "#111111";
 
   ctx.fillRect(
     player.x - 5,
@@ -544,7 +602,6 @@ function drawPlayer() {
     8,
     22
   );
-
 
   ctx.fillRect(
     player.x +
@@ -555,14 +612,12 @@ function drawPlayer() {
     22
   );
 
-
   ctx.fillRect(
     player.x - 5,
     player.y + 50,
     8,
     22
   );
-
 
   ctx.fillRect(
     player.x +
@@ -573,10 +628,11 @@ function drawPlayer() {
     22
   );
 
+
+  /* headlights */
 
   ctx.fillStyle =
     "#fff59d";
-
 
   ctx.fillRect(
     player.x + 6,
@@ -585,7 +641,6 @@ function drawPlayer() {
     6
   );
 
-
   ctx.fillRect(
     player.x +
       player.width -
@@ -593,6 +648,19 @@ function drawPlayer() {
     player.y + 2,
     10,
     6
+  );
+
+
+  /* bumper */
+
+  ctx.fillStyle =
+    "#90caf9";
+
+  ctx.fillRect(
+    player.x + 5,
+    player.y + 72,
+    player.width - 10,
+    5
   );
 }
 
@@ -603,9 +671,11 @@ function drawPlayer() {
 
 function createEnemy() {
 
-  const lanes =
-    [75, 175, 275];
-
+  const lanes = [
+    75,
+    175,
+    275
+  ];
 
   const lane =
     lanes[
@@ -664,7 +734,7 @@ function createEnemy() {
 
 
 /* =========================
-   DRAW ENEMIES
+   ENEMIES
 ========================= */
 
 function drawEnemies() {
@@ -672,9 +742,23 @@ function drawEnemies() {
   enemies.forEach(
     enemy => {
 
+      /* shadow */
+
+      ctx.fillStyle =
+        "rgba(0,0,0,0.35)";
+
+      ctx.fillRect(
+        enemy.x + 5,
+        enemy.y + 7,
+        enemy.width,
+        enemy.height
+      );
+
+
+      /* body */
+
       ctx.fillStyle =
         enemy.color;
-
 
       ctx.fillRect(
         enemy.x,
@@ -684,9 +768,10 @@ function drawEnemies() {
       );
 
 
+      /* roof */
+
       ctx.fillStyle =
         "#222";
-
 
       ctx.fillRect(
         enemy.x + 7,
@@ -696,9 +781,10 @@ function drawEnemies() {
       );
 
 
+      /* windows */
+
       ctx.fillStyle =
         "#b3e5fc";
-
 
       ctx.fillRect(
         enemy.x + 10,
@@ -706,7 +792,6 @@ function drawEnemies() {
         enemy.width - 20,
         18
       );
-
 
       ctx.fillRect(
         enemy.x + 10,
@@ -716,17 +801,17 @@ function drawEnemies() {
       );
 
 
+      /* wheels */
+
       ctx.fillStyle =
         "#111";
 
-
       ctx.fillRect(
         enemy.x - 5,
         enemy.y + 10,
         8,
         22
       );
-
 
       ctx.fillRect(
         enemy.x +
@@ -737,14 +822,12 @@ function drawEnemies() {
         22
       );
 
-
       ctx.fillRect(
         enemy.x - 5,
         enemy.y + 50,
         8,
         22
       );
-
 
       ctx.fillRect(
         enemy.x +
@@ -754,20 +837,45 @@ function drawEnemies() {
         8,
         22
       );
+
+
+      /* red lights */
+
+      ctx.fillStyle =
+        "#ff5252";
+
+      ctx.fillRect(
+        enemy.x + 6,
+        enemy.y + 70,
+        10,
+        6
+      );
+
+      ctx.fillRect(
+        enemy.x +
+          enemy.width -
+          16,
+        enemy.y + 70,
+        10,
+        6
+      );
+
     }
   );
 }
 
 
 /* =========================
-   CREATE COIN
+   COINS
 ========================= */
 
 function createCoin() {
 
-  const lanes =
-    [75, 175, 275];
-
+  const lanes = [
+    75,
+    175,
+    275
+  ];
 
   const lane =
     lanes[
@@ -787,29 +895,50 @@ function createCoin() {
 
     radius: 13,
 
-    speed: 4
+    speed: 4,
+
+    rotation: 0
   });
 }
 
-
-/* =========================
-   DRAW COINS
-========================= */
 
 function drawCoins() {
 
   coins.forEach(
     coin => {
 
+      coin.rotation += 0.12;
+
+
+      const scale =
+        Math.abs(
+          Math.cos(
+            coin.rotation
+          )
+        );
+
+
+      ctx.save();
+
+      ctx.translate(
+        coin.x,
+        coin.y
+      );
+
+      ctx.scale(
+        scale,
+        1
+      );
+
+
       ctx.fillStyle =
         "#ffd700";
-
 
       ctx.beginPath();
 
       ctx.arc(
-        coin.x,
-        coin.y,
+        0,
+        0,
         coin.radius,
         0,
         Math.PI * 2
@@ -826,24 +955,8 @@ function drawCoins() {
       ctx.stroke();
 
 
-      ctx.fillStyle =
-        "#8d6e00";
+      ctx.restore();
 
-      ctx.font =
-        "bold 16px Arial";
-
-      ctx.textAlign =
-        "center";
-
-      ctx.textBaseline =
-        "middle";
-
-
-      ctx.fillText(
-        "$",
-        coin.x,
-        coin.y
-      );
     }
   );
 }
@@ -860,6 +973,7 @@ function updateEnemies() {
 
       enemy.y +=
         enemy.speed;
+
     }
   );
 
@@ -898,6 +1012,7 @@ function updateCoins() {
 
       coin.y +=
         coin.speed;
+
     }
   );
 
@@ -906,8 +1021,7 @@ function updateCoins() {
     coins.filter(
       coin =>
         coin.y <
-        canvas.height +
-          50
+        canvas.height + 50
     );
 }
 
@@ -924,19 +1038,15 @@ function isColliding(
   return (
 
     a.x <
-      b.x +
-        b.width &&
+      b.x + b.width &&
 
-    a.x +
-      a.width >
+    a.x + a.width >
       b.x &&
 
     a.y <
-      b.y +
-        b.height &&
+      b.y + b.height &&
 
-    a.y +
-      a.height >
+    a.y + a.height >
       b.y
   );
 }
@@ -991,7 +1101,7 @@ function checkEnemyCollision() {
 
 
       crashEffect =
-        20;
+        25;
 
 
       playSound(
@@ -1011,6 +1121,7 @@ function checkEnemyCollision() {
       ) {
 
         endGame();
+
       }
 
 
@@ -1048,12 +1159,10 @@ function checkCoinCollision() {
         coin.radius,
 
       width:
-        coin.radius *
-        2,
+        coin.radius * 2,
 
       height:
-        coin.radius *
-        2
+        coin.radius * 2
     };
 
 
@@ -1111,7 +1220,7 @@ function drawCrashEffect() {
 
   ctx.fillStyle =
     `rgba(255, 80, 0, ${
-      crashEffect / 30
+      crashEffect / 35
     })`;
 
 
@@ -1139,6 +1248,9 @@ function endGame() {
   paused =
     false;
 
+  countdownRunning =
+    false;
+
 
   cancelAnimationFrame(
     animationId
@@ -1153,7 +1265,6 @@ function endGame() {
     highScore =
       score;
 
-
     localStorage.setItem(
       "trafficDodgeHighScore",
       highScore
@@ -1164,14 +1275,12 @@ function endGame() {
   highScoreText.textContent =
     highScore;
 
-
   menuHighScore.textContent =
     highScore;
 
 
   ctx.fillStyle =
-    "rgba(0, 0, 0, 0.82)";
-
+    "rgba(0,0,0,0.82)";
 
   ctx.fillRect(
     0,
@@ -1184,14 +1293,12 @@ function endGame() {
   ctx.fillStyle =
     "white";
 
-
   ctx.textAlign =
     "center";
 
 
   ctx.font =
     "40px Arial";
-
 
   ctx.fillText(
     "GAME OVER",
@@ -1203,20 +1310,17 @@ function endGame() {
   ctx.font =
     "24px Arial";
 
-
   ctx.fillText(
     `Score: ${score}`,
     canvas.width / 2,
     275
   );
 
-
   ctx.fillText(
     `Coins: ${coinCount}`,
     canvas.width / 2,
     315
   );
-
 
   ctx.fillText(
     `Best: ${highScore}`,
@@ -1231,14 +1335,13 @@ function endGame() {
 
 
 /* =========================
-   PAUSE SCREEN
+   PAUSE
 ========================= */
 
 function drawPauseScreen() {
 
   ctx.fillStyle =
-    "rgba(0, 0, 0, 0.65)";
-
+    "rgba(0,0,0,0.65)";
 
   ctx.fillRect(
     0,
@@ -1251,14 +1354,11 @@ function drawPauseScreen() {
   ctx.fillStyle =
     "white";
 
-
   ctx.textAlign =
     "center";
 
-
   ctx.font =
     "42px Arial";
-
 
   ctx.fillText(
     "PAUSED",
@@ -1291,7 +1391,8 @@ function gameLoop() {
 
 
   if (
-    !paused
+    !paused &&
+    !countdownRunning
   ) {
 
     if (
@@ -1330,7 +1431,14 @@ function gameLoop() {
 
     drawPlayer();
 
-    drawPauseScreen();
+    if (
+      paused
+    ) {
+
+      drawPauseScreen();
+
+    }
+
   }
 
 
@@ -1338,6 +1446,95 @@ function gameLoop() {
     requestAnimationFrame(
       gameLoop
     );
+}
+
+
+/* =========================
+   COUNTDOWN
+========================= */
+
+function startCountdown() {
+
+  countdownRunning =
+    true;
+
+
+  const numbers = [
+    "3",
+    "2",
+    "1",
+    "GO!"
+  ];
+
+
+  let index = 0;
+
+
+  countdown.classList.remove(
+    "hidden"
+  );
+
+
+  function showNumber() {
+
+    countdown.textContent =
+      numbers[index];
+
+
+    countdown.style.animation =
+      "none";
+
+
+    void countdown.offsetWidth;
+
+
+    countdown.style.animation =
+      "countdownPop 0.9s ease-out";
+
+
+    playSound(
+      index === 3
+        ? 900
+        : 500,
+      0.15,
+      "sine",
+      0.08
+    );
+
+
+    index++;
+
+
+    if (
+      index <
+      numbers.length
+    ) {
+
+      setTimeout(
+        showNumber,
+        900
+      );
+
+    } else {
+
+      setTimeout(
+        () => {
+
+          countdown.classList.add(
+            "hidden"
+          );
+
+          countdownRunning =
+            false;
+
+        },
+        700
+      );
+    }
+  }
+
+
+  showNumber();
 }
 
 
@@ -1382,6 +1579,9 @@ function startGame() {
     "PAUSE";
 
 
+  startCountdown();
+
+
   gameLoop();
 }
 
@@ -1398,9 +1598,17 @@ function backToMenu() {
   paused =
     false;
 
+  countdownRunning =
+    false;
+
 
   cancelAnimationFrame(
     animationId
+  );
+
+
+  countdown.classList.add(
+    "hidden"
   );
 
 
@@ -1426,7 +1634,8 @@ function backToMenu() {
 function togglePause() {
 
   if (
-    !gameRunning
+    !gameRunning ||
+    countdownRunning
   ) {
 
     return;
@@ -1453,14 +1662,15 @@ function togglePause() {
 
 
 /* =========================
-   MOVE LEFT
+   MOVEMENT
 ========================= */
 
 function moveLeft() {
 
   if (
     !gameRunning ||
-    paused
+    paused ||
+    countdownRunning
   ) {
 
     return;
@@ -1482,15 +1692,12 @@ function moveLeft() {
 }
 
 
-/* =========================
-   MOVE RIGHT
-========================= */
-
 function moveRight() {
 
   if (
     !gameRunning ||
-    paused
+    paused ||
+    countdownRunning
   ) {
 
     return;
@@ -1529,6 +1736,8 @@ document.addEventListener(
       "ArrowLeft"
     ) {
 
+      event.preventDefault();
+
       moveLeft();
     }
 
@@ -1537,6 +1746,8 @@ document.addEventListener(
       event.key ===
       "ArrowRight"
     ) {
+
+      event.preventDefault();
 
       moveRight();
     }
@@ -1547,6 +1758,8 @@ document.addEventListener(
       " "
     ) {
 
+      event.preventDefault();
+
       togglePause();
     }
   }
@@ -1554,7 +1767,7 @@ document.addEventListener(
 
 
 /* =========================
-   MOBILE
+   MOBILE CONTROLS
 ========================= */
 
 leftButton.addEventListener(
@@ -1592,7 +1805,7 @@ rightButton.addEventListener(
 
 
 /* =========================
-   GAME BUTTON
+   PAUSE BUTTON
 ========================= */
 
 startButton.addEventListener(
@@ -1625,7 +1838,17 @@ startButton.addEventListener(
 
 
 /* =========================
-   SPAWN ENEMIES
+   PLAY BUTTON
+========================= */
+
+playButton.addEventListener(
+  "click",
+  startGame
+);
+
+
+/* =========================
+   ENEMY SPAWN
 ========================= */
 
 setInterval(
@@ -1633,10 +1856,18 @@ setInterval(
 
     if (
       gameRunning &&
-      !paused
+      !paused &&
+      !countdownRunning
     ) {
 
+      const settings =
+        difficultySettings[
+          selectedDifficulty
+        ];
+
+
       createEnemy();
+
     }
 
   },
@@ -1645,7 +1876,7 @@ setInterval(
 
 
 /* =========================
-   SPAWN COINS
+   COIN SPAWN
 ========================= */
 
 setInterval(
@@ -1653,17 +1884,14 @@ setInterval(
 
     if (
       gameRunning &&
-      !paused
+      !paused &&
+      !countdownRunning
     ) {
 
       createCoin();
+
     }
 
   },
   1200
-);
-
-playButton.addEventListener(
-  "click",
-  startGame
 );
