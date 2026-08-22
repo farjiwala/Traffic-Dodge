@@ -11,29 +11,117 @@
 
   <div class="game-container">
 
-    <h1>🚗 Traffic Dodge</h1>
+    <!-- START MENU -->
+    <div id="menuScreen" class="screen">
 
-    <div class="game-info">
-      <div>🏆 Score: <span id="score">0</span></div>
-      <div>❤️ Lives: <span id="lives">3</span></div>
-      <div>🪙 Coins: <span id="coins">0</span></div>
+      <div class="logo">🚗</div>
+
+      <h1>TRAFFIC DODGE</h1>
+
+      <p class="tagline">
+        Dodge traffic. Collect coins. Beat your record!
+      </p>
+
+      <div class="best-box">
+        🏆 Best Score:
+        <span id="menuHighScore">0</span>
+      </div>
+
+      <h2>Choose Difficulty</h2>
+
+      <div class="difficulty-buttons">
+
+        <button
+          class="difficulty active"
+          data-level="easy">
+          EASY
+        </button>
+
+        <button
+          class="difficulty"
+          data-level="normal">
+          NORMAL
+        </button>
+
+        <button
+          class="difficulty"
+          data-level="hard">
+          HARD
+        </button>
+
+      </div>
+
+      <button id="playButton" class="play-button">
+        ▶ PLAY
+      </button>
+
+      <div class="how-to">
+
+        <h3>🎮 How to Play</h3>
+
+        <p>⬅️ ➡️ Move your car</p>
+        <p>🚗 Avoid enemy cars</p>
+        <p>🪙 Collect coins</p>
+        <p>❤️ You have 3 lives</p>
+
+      </div>
+
     </div>
 
-    <div class="high-score">
-      Best: <span id="highScore">0</span>
-    </div>
 
-    <canvas
-      id="gameCanvas"
-      width="400"
-      height="600">
-    </canvas>
+    <!-- GAME -->
+    <div id="gameScreen" class="screen hidden">
 
-    <button id="startButton">START GAME</button>
+      <h1>🚗 Traffic Dodge</h1>
 
-    <div class="controls">
-      <button id="leftButton">⬅️</button>
-      <button id="rightButton">➡️</button>
+      <div class="game-info">
+
+        <div>
+          🏆 Score:
+          <span id="score">0</span>
+        </div>
+
+        <div>
+          ❤️ Lives:
+          <span id="lives">3</span>
+        </div>
+
+        <div>
+          🪙 Coins:
+          <span id="coins">0</span>
+        </div>
+
+      </div>
+
+      <div class="high-score">
+
+        Best:
+        <span id="highScore">0</span>
+
+      </div>
+
+      <canvas
+        id="gameCanvas"
+        width="400"
+        height="600">
+      </canvas>
+
+      <button id="startButton">
+        PAUSE
+      </button>
+
+      <div class="controls">
+
+        <button id="leftButton">
+          ⬅️
+        </button>
+
+        <button id="rightButton">
+          ➡️
+        </button>
+
+      </div>
+
     </div>
 
   </div>
