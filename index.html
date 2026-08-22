@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Traffic Dodge</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
 
   <div class="game-container">
 
-    <!-- START MENU -->
+    <!-- MENU -->
     <div id="menuScreen" class="screen">
 
       <div class="logo">🚗</div>
@@ -31,21 +31,15 @@
 
       <div class="difficulty-buttons">
 
-        <button
-          class="difficulty active"
-          data-level="easy">
+        <button class="difficulty active" data-level="easy">
           EASY
         </button>
 
-        <button
-          class="difficulty"
-          data-level="normal">
+        <button class="difficulty" data-level="normal">
           NORMAL
         </button>
 
-        <button
-          class="difficulty"
-          data-level="hard">
+        <button class="difficulty" data-level="hard">
           HARD
         </button>
 
@@ -60,7 +54,7 @@
         <h3>🎮 How to Play</h3>
 
         <p>⬅️ ➡️ Move your car</p>
-        <p>🚗 Avoid enemy cars</p>
+        <p>🚘 Avoid enemy cars</p>
         <p>🪙 Collect coins</p>
         <p>❤️ You have 3 lives</p>
 
@@ -94,17 +88,23 @@
       </div>
 
       <div class="high-score">
-
         Best:
         <span id="highScore">0</span>
-
       </div>
 
-      <canvas
-        id="gameCanvas"
-        width="400"
-        height="600">
-      </canvas>
+      <div class="canvas-wrapper">
+
+        <canvas
+          id="gameCanvas"
+          width="400"
+          height="600">
+        </canvas>
+
+        <div id="countdown" class="countdown hidden">
+          3
+        </div>
+
+      </div>
 
       <button id="startButton">
         PAUSE
