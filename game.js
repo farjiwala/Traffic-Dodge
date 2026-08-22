@@ -1662,3 +1662,8 @@ setInterval(
   },
   1200
 );
+
+playButton.addEventListener(
+  "click",
+  startGame
+);
