@@ -3,6 +3,8 @@ const ctx = canvas.getContext("2d");
 
 const scoreText = document.getElementById("score");
 const startButton = document.getElementById("startButton");
+const leftButton = document.getElementById("leftButton");
+const rightButton = document.getElementById("rightButton");
 
 let player;
 let enemies;
@@ -233,3 +235,29 @@ setInterval(() => {
 }, 1000);
 
 startButton.addEventListener("click", startGame);
+
+function moveLeft() {
+  if (!gameRunning) return;
+
+  player.x -= player.speed;
+
+  if (player.x < road.x) {
+    player.x = road.x;
+  }
+}
+
+function moveRight() {
+  if (!gameRunning) return;
+
+  player.x += player.speed;
+
+  if (player.x + player.width > road.x + road.width) {
+    player.x = road.x + road.width - player.width;
+  }
+}
+
+leftButton.addEventListener("touchstart", moveLeft);
+rightButton.addEventListener("touchstart", moveRight);
+
+leftButton.addEventListener("click", moveLeft);
+rightButton.addEventListener("click", moveRight);
