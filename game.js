@@ -1,34 +1,130 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const canvas =
+  document.getElementById("gameCanvas");
 
-const scoreText = document.getElementById("score");
-const livesText = document.getElementById("lives");
-const coinsText = document.getElementById("coins");
-const highScoreText = document.getElementById("highScore");
+const ctx =
+  canvas.getContext("2d");
 
-const startButton = document.getElementById("startButton");
-const leftButton = document.getElementById("leftButton");
-const rightButton = document.getElementById("rightButton");
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const menuScreen =
+  document.getElementById("menuScreen");
+
+const gameScreen =
+  document.getElementById("gameScreen");
+
+const playButton =
+  document.getElementById("playButton");
+
+const difficultyButtons =
+  document.querySelectorAll(".difficulty");
+
+const menuHighScore =
+  document.getElementById("menuHighScore");
+
+const scoreText =
+  document.getElementById("score");
+
+const livesText =
+  document.getElementById("lives");
+
+const coinsText =
+  document.getElementById("coins");
+
+const highScoreText =
+  document.getElementById("highScore");
+
+const startButton =
+  document.getElementById("startButton");
+
+const leftButton =
+  document.getElementById("leftButton");
+
+const rightButton =
+  document.getElementById("rightButton");
+
+
+/* =========================
+   GAME VARIABLES
+========================= */
 
 let player;
+
 let enemies = [];
+
 let coins = [];
 
 let score = 0;
+
 let lives = 3;
+
 let coinCount = 0;
 
-let highScore =
-  Number(localStorage.getItem("trafficDodgeHighScore")) || 0;
-
 let gameRunning = false;
+
 let paused = false;
 
 let animationId;
+
 let roadOffset = 0;
+
 let hitCooldown = 0;
 
 let crashEffect = 0;
+
+let selectedDifficulty = "easy";
+
+
+/* =========================
+   HIGH SCORE
+========================= */
+
+let highScore =
+  Number(
+    localStorage.getItem(
+      "trafficDodgeHighScore"
+    )
+  ) || 0;
+
+menuHighScore.textContent =
+  highScore;
+
+highScoreText.textContent =
+  highScore;
+
+
+/* =========================
+   DIFFICULTY SETTINGS
+========================= */
+
+const difficultySettings = {
+
+  easy: {
+    enemySpeed: 3.5,
+    spawnTime: 1200,
+    coinTime: 1000
+  },
+
+  normal: {
+    enemySpeed: 4.5,
+    spawnTime: 1000,
+    coinTime: 1200
+  },
+
+  hard: {
+    enemySpeed: 6,
+    spawnTime: 750,
+    coinTime: 1400
+  }
+
+};
+
+
+/* =========================
+   ROAD
+========================= */
 
 const road = {
   x: 50,
@@ -36,19 +132,25 @@ const road = {
 };
 
 
-// =========================
-// SOUND SYSTEM
-// =========================
+/* =========================
+   SOUND
+========================= */
 
 let audioContext = null;
 
+
 function initAudio() {
+
   if (!audioContext) {
+
     audioContext =
-      new (window.AudioContext ||
-        window.webkitAudioContext)();
+      new (
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
   }
 }
+
 
 function playSound(
   frequency,
@@ -56,9 +158,11 @@ function playSound(
   type = "sine",
   volume = 0.08
 ) {
+
   if (!audioContext) {
     return;
   }
+
 
   const oscillator =
     audioContext.createOscillator();
@@ -66,69 +170,142 @@ function playSound(
   const gain =
     audioContext.createGain();
 
-  oscillator.type = type;
-  oscillator.frequency.value = frequency;
 
-  gain.gain.value = volume;
+  oscillator.type =
+    type;
+
+  oscillator.frequency.value =
+    frequency;
+
+
+  gain.gain.value =
+    volume;
+
 
   oscillator.connect(gain);
-  gain.connect(audioContext.destination);
+
+  gain.connect(
+    audioContext.destination
+  );
+
 
   oscillator.start();
 
+
   gain.gain.exponentialRampToValueAtTime(
     0.001,
-    audioContext.currentTime + duration
+    audioContext.currentTime +
+      duration
   );
 
+
   oscillator.stop(
-    audioContext.currentTime + duration
+    audioContext.currentTime +
+      duration
   );
 }
 
 
-// =========================
-// RESET
-// =========================
+/* =========================
+   DIFFICULTY SELECTION
+========================= */
+
+difficultyButtons.forEach(
+  button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        difficultyButtons.forEach(
+          item => {
+
+            item.classList.remove(
+              "active"
+            );
+          }
+        );
+
+
+        button.classList.add(
+          "active"
+        );
+
+
+        selectedDifficulty =
+          button.dataset.level;
+      }
+    );
+  }
+);
+
+
+/* =========================
+   RESET
+========================= */
 
 function resetGame() {
 
   player = {
+
     x: 175,
+
     y: 500,
+
     width: 50,
+
     height: 80,
+
     speed: 7
   };
 
+
   enemies = [];
+
   coins = [];
 
+
   score = 0;
+
   lives = 3;
+
   coinCount = 0;
 
+
   roadOffset = 0;
+
   hitCooldown = 0;
+
   crashEffect = 0;
 
   paused = false;
+
+
   gameRunning = true;
 
-  scoreText.textContent = score;
-  livesText.textContent = lives;
-  coinsText.textContent = coinCount;
-  highScoreText.textContent = highScore;
+
+  scoreText.textContent =
+    score;
+
+  livesText.textContent =
+    lives;
+
+  coinsText.textContent =
+    coinCount;
+
+  highScoreText.textContent =
+    highScore;
 }
 
 
-// =========================
-// ROAD
-// =========================
+/* =========================
+   DRAW ROAD
+========================= */
 
 function drawRoad() {
 
-  ctx.fillStyle = "#174d25";
+  ctx.fillStyle =
+    "#174d25";
 
   ctx.fillRect(
     0,
@@ -138,7 +315,8 @@ function drawRoad() {
   );
 
 
-  ctx.fillStyle = "#555";
+  ctx.fillStyle =
+    "#555";
 
   ctx.fillRect(
     road.x,
@@ -148,7 +326,8 @@ function drawRoad() {
   );
 
 
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle =
+    "#ffffff";
 
   ctx.fillRect(
     road.x,
@@ -157,8 +336,11 @@ function drawRoad() {
     canvas.height
   );
 
+
   ctx.fillRect(
-    road.x + road.width - 5,
+    road.x +
+      road.width -
+      5,
     0,
     5,
     canvas.height
@@ -167,107 +349,152 @@ function drawRoad() {
 
   roadOffset += 8;
 
-  if (roadOffset >= 60) {
+
+  if (
+    roadOffset >= 60
+  ) {
+
     roadOffset = 0;
   }
 
 
-  ctx.strokeStyle = "#ffffff";
+  ctx.strokeStyle =
+    "#ffffff";
+
   ctx.lineWidth = 5;
 
-  ctx.setLineDash([30, 30]);
 
-  ctx.lineDashOffset = roadOffset;
+  ctx.setLineDash(
+    [30, 30]
+  );
+
+  ctx.lineDashOffset =
+    roadOffset;
 
 
   ctx.beginPath();
 
-  ctx.moveTo(150, 0);
-  ctx.lineTo(150, canvas.height);
+  ctx.moveTo(
+    150,
+    0
+  );
+
+  ctx.lineTo(
+    150,
+    canvas.height
+  );
 
   ctx.stroke();
 
 
   ctx.beginPath();
 
-  ctx.moveTo(250, 0);
-  ctx.lineTo(250, canvas.height);
+  ctx.moveTo(
+    250,
+    0
+  );
+
+  ctx.lineTo(
+    250,
+    canvas.height
+  );
 
   ctx.stroke();
 
 
   ctx.setLineDash([]);
 
-  ctx.lineDashOffset = 0;
+  ctx.lineDashOffset =
+    0;
 
 
   drawTrees();
 }
 
 
-// =========================
-// TREES
-// =========================
+/* =========================
+   TREES
+========================= */
 
 function drawTrees() {
 
-  const positions = [80, 320];
-
-  positions.forEach(x => {
-
-    for (
-      let y = -100;
-      y < canvas.height + 100;
-      y += 130
-    ) {
-
-      const treeY =
-        (y + roadOffset * 2) % 700 - 100;
+  const positions =
+    [80, 320];
 
 
-      ctx.fillStyle = "#795548";
+  positions.forEach(
+    x => {
 
-      ctx.fillRect(
-        x - 5,
-        treeY + 25,
-        10,
-        30
-      );
+      for (
+        let y = -100;
+        y <
+        canvas.height +
+          100;
+        y += 130
+      ) {
+
+        const treeY =
+          (
+            y +
+            roadOffset *
+              2
+          ) %
+            700 -
+          100;
 
 
-      ctx.fillStyle = "#2e7d32";
+        ctx.fillStyle =
+          "#795548";
 
-      ctx.beginPath();
+        ctx.fillRect(
+          x - 5,
+          treeY + 25,
+          10,
+          30
+        );
 
-      ctx.arc(
-        x,
-        treeY + 20,
-        23,
-        0,
-        Math.PI * 2
-      );
 
-      ctx.fill();
+        ctx.fillStyle =
+          "#2e7d32";
+
+        ctx.beginPath();
+
+        ctx.arc(
+          x,
+          treeY + 20,
+          23,
+          0,
+          Math.PI * 2
+        );
+
+        ctx.fill();
+      }
     }
-  });
+  );
 }
 
 
-// =========================
-// PLAYER
-// =========================
+/* =========================
+   PLAYER
+========================= */
 
 function drawPlayer() {
 
   if (
     hitCooldown > 0 &&
-    Math.floor(hitCooldown / 5) % 2 === 0
+    Math.floor(
+      hitCooldown / 5
+    ) %
+      2 ===
+      0
   ) {
+
     return;
   }
 
 
-  ctx.fillStyle = "#1976d2";
+  ctx.fillStyle =
+    "#1976d2";
 
   ctx.fillRect(
     player.x,
@@ -277,7 +504,8 @@ function drawPlayer() {
   );
 
 
-  ctx.fillStyle = "#1565c0";
+  ctx.fillStyle =
+    "#1565c0";
 
   ctx.fillRect(
     player.x + 7,
@@ -287,7 +515,8 @@ function drawPlayer() {
   );
 
 
-  ctx.fillStyle = "#b3e5fc";
+  ctx.fillStyle =
+    "#b3e5fc";
 
   ctx.fillRect(
     player.x + 10,
@@ -295,6 +524,7 @@ function drawPlayer() {
     player.width - 20,
     18
   );
+
 
   ctx.fillRect(
     player.x + 10,
@@ -304,7 +534,9 @@ function drawPlayer() {
   );
 
 
-  ctx.fillStyle = "#111";
+  ctx.fillStyle =
+    "#111";
+
 
   ctx.fillRect(
     player.x - 5,
@@ -313,12 +545,16 @@ function drawPlayer() {
     22
   );
 
+
   ctx.fillRect(
-    player.x + player.width - 3,
+    player.x +
+      player.width -
+      3,
     player.y + 10,
     8,
     22
   );
+
 
   ctx.fillRect(
     player.x - 5,
@@ -327,15 +563,20 @@ function drawPlayer() {
     22
   );
 
+
   ctx.fillRect(
-    player.x + player.width - 3,
+    player.x +
+      player.width -
+      3,
     player.y + 50,
     8,
     22
   );
 
 
-  ctx.fillStyle = "#fff59d";
+  ctx.fillStyle =
+    "#fff59d";
+
 
   ctx.fillRect(
     player.x + 6,
@@ -344,8 +585,11 @@ function drawPlayer() {
     6
   );
 
+
   ctx.fillRect(
-    player.x + player.width - 16,
+    player.x +
+      player.width -
+      16,
     player.y + 2,
     10,
     6
@@ -353,18 +597,21 @@ function drawPlayer() {
 }
 
 
-// =========================
-// ENEMY
-// =========================
+/* =========================
+   CREATE ENEMY
+========================= */
 
 function createEnemy() {
 
-  const lanes = [75, 175, 275];
+  const lanes =
+    [75, 175, 275];
+
 
   const lane =
     lanes[
       Math.floor(
-        Math.random() * lanes.length
+        Math.random() *
+          lanes.length
       )
     ];
 
@@ -377,9 +624,17 @@ function createEnemy() {
   ];
 
 
-  // Difficulty increases with score
-  const difficulty =
-    Math.min(score * 0.08, 5);
+  const settings =
+    difficultySettings[
+      selectedDifficulty
+    ];
+
+
+  const difficultyBoost =
+    Math.min(
+      score * 0.05,
+      4
+    );
 
 
   enemies.push({
@@ -393,117 +648,140 @@ function createEnemy() {
     height: 80,
 
     speed:
-      4 +
+      settings.enemySpeed +
       Math.random() * 2 +
-      difficulty,
+      difficultyBoost,
 
     color:
       colors[
         Math.floor(
-          Math.random() * colors.length
+          Math.random() *
+            colors.length
         )
       ]
   });
 }
 
 
-// =========================
-// DRAW ENEMIES
-// =========================
+/* =========================
+   DRAW ENEMIES
+========================= */
 
 function drawEnemies() {
 
-  enemies.forEach(enemy => {
+  enemies.forEach(
+    enemy => {
 
-    ctx.fillStyle = enemy.color;
-
-    ctx.fillRect(
-      enemy.x,
-      enemy.y,
-      enemy.width,
-      enemy.height
-    );
+      ctx.fillStyle =
+        enemy.color;
 
 
-    ctx.fillStyle = "#222";
-
-    ctx.fillRect(
-      enemy.x + 7,
-      enemy.y + 8,
-      enemy.width - 14,
-      48
-    );
+      ctx.fillRect(
+        enemy.x,
+        enemy.y,
+        enemy.width,
+        enemy.height
+      );
 
 
-    ctx.fillStyle = "#b3e5fc";
-
-    ctx.fillRect(
-      enemy.x + 10,
-      enemy.y + 13,
-      enemy.width - 20,
-      18
-    );
-
-    ctx.fillRect(
-      enemy.x + 10,
-      enemy.y + 35,
-      enemy.width - 20,
-      15
-    );
+      ctx.fillStyle =
+        "#222";
 
 
-    ctx.fillStyle = "#111";
+      ctx.fillRect(
+        enemy.x + 7,
+        enemy.y + 8,
+        enemy.width - 14,
+        48
+      );
 
-    ctx.fillRect(
-      enemy.x - 5,
-      enemy.y + 10,
-      8,
-      22
-    );
 
-    ctx.fillRect(
-      enemy.x + enemy.width - 3,
-      enemy.y + 10,
-      8,
-      22
-    );
+      ctx.fillStyle =
+        "#b3e5fc";
 
-    ctx.fillRect(
-      enemy.x - 5,
-      enemy.y + 50,
-      8,
-      22
-    );
 
-    ctx.fillRect(
-      enemy.x + enemy.width - 3,
-      enemy.y + 50,
-      8,
-      22
-    );
-  });
+      ctx.fillRect(
+        enemy.x + 10,
+        enemy.y + 13,
+        enemy.width - 20,
+        18
+      );
+
+
+      ctx.fillRect(
+        enemy.x + 10,
+        enemy.y + 35,
+        enemy.width - 20,
+        15
+      );
+
+
+      ctx.fillStyle =
+        "#111";
+
+
+      ctx.fillRect(
+        enemy.x - 5,
+        enemy.y + 10,
+        8,
+        22
+      );
+
+
+      ctx.fillRect(
+        enemy.x +
+          enemy.width -
+          3,
+        enemy.y + 10,
+        8,
+        22
+      );
+
+
+      ctx.fillRect(
+        enemy.x - 5,
+        enemy.y + 50,
+        8,
+        22
+      );
+
+
+      ctx.fillRect(
+        enemy.x +
+          enemy.width -
+          3,
+        enemy.y + 50,
+        8,
+        22
+      );
+    }
+  );
 }
 
 
-// =========================
-// COIN
-// =========================
+/* =========================
+   CREATE COIN
+========================= */
 
 function createCoin() {
 
-  const lanes = [75, 175, 275];
+  const lanes =
+    [75, 175, 275];
+
 
   const lane =
     lanes[
       Math.floor(
-        Math.random() * lanes.length
+        Math.random() *
+          lanes.length
       )
     ];
 
 
   coins.push({
 
-    x: lane + 25,
+    x:
+      lane + 25,
 
     y: -30,
 
@@ -514,126 +792,166 @@ function createCoin() {
 }
 
 
-// =========================
-// DRAW COINS
-// =========================
+/* =========================
+   DRAW COINS
+========================= */
 
 function drawCoins() {
 
-  coins.forEach(coin => {
+  coins.forEach(
+    coin => {
 
-    ctx.fillStyle = "#ffd700";
-
-    ctx.beginPath();
-
-    ctx.arc(
-      coin.x,
-      coin.y,
-      coin.radius,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.fill();
+      ctx.fillStyle =
+        "#ffd700";
 
 
-    ctx.strokeStyle = "#fff176";
+      ctx.beginPath();
 
-    ctx.lineWidth = 3;
+      ctx.arc(
+        coin.x,
+        coin.y,
+        coin.radius,
+        0,
+        Math.PI * 2
+      );
 
-    ctx.stroke();
+      ctx.fill();
 
 
-    ctx.fillStyle = "#8d6e00";
+      ctx.strokeStyle =
+        "#fff176";
 
-    ctx.font = "bold 16px Arial";
+      ctx.lineWidth = 3;
 
-    ctx.textAlign = "center";
+      ctx.stroke();
 
-    ctx.textBaseline = "middle";
 
-    ctx.fillText(
-      "$",
-      coin.x,
-      coin.y
-    );
-  });
+      ctx.fillStyle =
+        "#8d6e00";
+
+      ctx.font =
+        "bold 16px Arial";
+
+      ctx.textAlign =
+        "center";
+
+      ctx.textBaseline =
+        "middle";
+
+
+      ctx.fillText(
+        "$",
+        coin.x,
+        coin.y
+      );
+    }
+  );
 }
 
 
-// =========================
-// UPDATE ENEMIES
-// =========================
+/* =========================
+   UPDATE ENEMIES
+========================= */
 
 function updateEnemies() {
 
-  enemies.forEach(enemy => {
+  enemies.forEach(
+    enemy => {
 
-    enemy.y += enemy.speed;
-  });
-
-
-  enemies = enemies.filter(enemy => {
-
-    if (enemy.y > canvas.height) {
-
-      score++;
-
-      scoreText.textContent = score;
-
-      return false;
+      enemy.y +=
+        enemy.speed;
     }
+  );
 
-    return true;
-  });
+
+  enemies =
+    enemies.filter(
+      enemy => {
+
+        if (
+          enemy.y >
+          canvas.height
+        ) {
+
+          score++;
+
+          scoreText.textContent =
+            score;
+
+          return false;
+        }
+
+        return true;
+      }
+    );
 }
 
 
-// =========================
-// UPDATE COINS
-// =========================
+/* =========================
+   UPDATE COINS
+========================= */
 
 function updateCoins() {
 
-  coins.forEach(coin => {
+  coins.forEach(
+    coin => {
 
-    coin.y += coin.speed;
-  });
-
-
-  coins = coins.filter(
-    coin =>
-      coin.y < canvas.height + 50
+      coin.y +=
+        coin.speed;
+    }
   );
+
+
+  coins =
+    coins.filter(
+      coin =>
+        coin.y <
+        canvas.height +
+          50
+    );
 }
 
 
-// =========================
-// COLLISION
-// =========================
+/* =========================
+   COLLISION
+========================= */
 
-function isColliding(a, b) {
+function isColliding(
+  a,
+  b
+) {
 
   return (
 
-    a.x < b.x + b.width &&
+    a.x <
+      b.x +
+        b.width &&
 
-    a.x + a.width > b.x &&
+    a.x +
+      a.width >
+      b.x &&
 
-    a.y < b.y + b.height &&
+    a.y <
+      b.y +
+        b.height &&
 
-    a.y + a.height > b.y
+    a.y +
+      a.height >
+      b.y
   );
 }
 
 
-// =========================
-// ENEMY COLLISION
-// =========================
+/* =========================
+   ENEMY COLLISION
+========================= */
 
 function checkEnemyCollision() {
 
-  if (hitCooldown > 0) {
+  if (
+    hitCooldown > 0
+  ) {
+
     return;
   }
 
@@ -644,7 +962,8 @@ function checkEnemyCollision() {
     i++
   ) {
 
-    const enemy = enemies[i];
+    const enemy =
+      enemies[i];
 
 
     if (
@@ -654,18 +973,25 @@ function checkEnemyCollision() {
       )
     ) {
 
-      enemies.splice(i, 1);
+      enemies.splice(
+        i,
+        1
+      );
 
 
       lives--;
+
 
       livesText.textContent =
         lives;
 
 
-      hitCooldown = 120;
+      hitCooldown =
+        120;
 
-      crashEffect = 20;
+
+      crashEffect =
+        20;
 
 
       playSound(
@@ -676,10 +1002,13 @@ function checkEnemyCollision() {
       );
 
 
-      player.x = 175;
+      player.x =
+        175;
 
 
-      if (lives <= 0) {
+      if (
+        lives <= 0
+      ) {
 
         endGame();
       }
@@ -691,19 +1020,21 @@ function checkEnemyCollision() {
 }
 
 
-// =========================
-// COIN COLLISION
-// =========================
+/* =========================
+   COIN COLLISION
+========================= */
 
 function checkCoinCollision() {
 
   for (
-    let i = coins.length - 1;
+    let i =
+      coins.length - 1;
     i >= 0;
     i--
   ) {
 
-    const coin = coins[i];
+    const coin =
+      coins[i];
 
 
     const coinBox = {
@@ -717,10 +1048,12 @@ function checkCoinCollision() {
         coin.radius,
 
       width:
-        coin.radius * 2,
+        coin.radius *
+        2,
 
       height:
-        coin.radius * 2
+        coin.radius *
+        2
     };
 
 
@@ -731,16 +1064,21 @@ function checkCoinCollision() {
       )
     ) {
 
-      coins.splice(i, 1);
+      coins.splice(
+        i,
+        1
+      );
 
 
       coinCount++;
+
 
       coinsText.textContent =
         coinCount;
 
 
       score += 5;
+
 
       scoreText.textContent =
         score;
@@ -757,23 +1095,25 @@ function checkCoinCollision() {
 }
 
 
-// =========================
-// CRASH EFFECT
-// =========================
+/* =========================
+   CRASH EFFECT
+========================= */
 
 function drawCrashEffect() {
 
-  if (crashEffect <= 0) {
+  if (
+    crashEffect <= 0
+  ) {
+
     return;
   }
 
-
-  ctx.save();
 
   ctx.fillStyle =
     `rgba(255, 80, 0, ${
       crashEffect / 30
     })`;
+
 
   ctx.fillRect(
     0,
@@ -783,21 +1123,22 @@ function drawCrashEffect() {
   );
 
 
-  ctx.restore();
-
   crashEffect--;
 }
 
 
-// =========================
-// GAME OVER
-// =========================
+/* =========================
+   GAME OVER
+========================= */
 
 function endGame() {
 
-  gameRunning = false;
+  gameRunning =
+    false;
 
-  paused = false;
+  paused =
+    false;
+
 
   cancelAnimationFrame(
     animationId
@@ -812,6 +1153,7 @@ function endGame() {
     highScore =
       score;
 
+
     localStorage.setItem(
       "trafficDodgeHighScore",
       highScore
@@ -823,8 +1165,13 @@ function endGame() {
     highScore;
 
 
+  menuHighScore.textContent =
+    highScore;
+
+
   ctx.fillStyle =
     "rgba(0, 0, 0, 0.82)";
+
 
   ctx.fillRect(
     0,
@@ -837,12 +1184,14 @@ function endGame() {
   ctx.fillStyle =
     "white";
 
+
   ctx.textAlign =
     "center";
 
 
   ctx.font =
     "40px Arial";
+
 
   ctx.fillText(
     "GAME OVER",
@@ -853,6 +1202,7 @@ function endGame() {
 
   ctx.font =
     "24px Arial";
+
 
   ctx.fillText(
     `Score: ${score}`,
@@ -876,18 +1226,19 @@ function endGame() {
 
 
   startButton.textContent =
-    "PLAY AGAIN";
+    "BACK TO MENU";
 }
 
 
-// =========================
-// PAUSE SCREEN
-// =========================
+/* =========================
+   PAUSE SCREEN
+========================= */
 
 function drawPauseScreen() {
 
   ctx.fillStyle =
     "rgba(0, 0, 0, 0.65)";
+
 
   ctx.fillRect(
     0,
@@ -900,11 +1251,14 @@ function drawPauseScreen() {
   ctx.fillStyle =
     "white";
 
+
   ctx.textAlign =
     "center";
 
+
   ctx.font =
     "42px Arial";
+
 
   ctx.fillText(
     "PAUSED",
@@ -914,13 +1268,16 @@ function drawPauseScreen() {
 }
 
 
-// =========================
-// GAME LOOP
-// =========================
+/* =========================
+   GAME LOOP
+========================= */
 
 function gameLoop() {
 
-  if (!gameRunning) {
+  if (
+    !gameRunning
+  ) {
+
     return;
   }
 
@@ -933,9 +1290,14 @@ function gameLoop() {
   );
 
 
-  if (!paused) {
+  if (
+    !paused
+  ) {
 
-    if (hitCooldown > 0) {
+    if (
+      hitCooldown > 0
+    ) {
+
       hitCooldown--;
     }
 
@@ -979,13 +1341,14 @@ function gameLoop() {
 }
 
 
-// =========================
-// START
-// =========================
+/* =========================
+   START GAME
+========================= */
 
 function startGame() {
 
   initAudio();
+
 
   if (
     audioContext &&
@@ -1005,6 +1368,16 @@ function startGame() {
   resetGame();
 
 
+  menuScreen.classList.add(
+    "hidden"
+  );
+
+
+  gameScreen.classList.remove(
+    "hidden"
+  );
+
+
   startButton.textContent =
     "PAUSE";
 
@@ -1013,13 +1386,49 @@ function startGame() {
 }
 
 
-// =========================
-// PAUSE / RESUME
-// =========================
+/* =========================
+   BACK TO MENU
+========================= */
+
+function backToMenu() {
+
+  gameRunning =
+    false;
+
+  paused =
+    false;
+
+
+  cancelAnimationFrame(
+    animationId
+  );
+
+
+  gameScreen.classList.add(
+    "hidden"
+  );
+
+
+  menuScreen.classList.remove(
+    "hidden"
+  );
+
+
+  menuHighScore.textContent =
+    highScore;
+}
+
+
+/* =========================
+   PAUSE / RESUME
+========================= */
 
 function togglePause() {
 
-  if (!gameRunning) {
+  if (
+    !gameRunning
+  ) {
+
     return;
   }
 
@@ -1028,7 +1437,9 @@ function togglePause() {
     !paused;
 
 
-  if (paused) {
+  if (
+    paused
+  ) {
 
     startButton.textContent =
       "RESUME";
@@ -1041,9 +1452,73 @@ function togglePause() {
 }
 
 
-// =========================
-// KEYBOARD
-// =========================
+/* =========================
+   MOVE LEFT
+========================= */
+
+function moveLeft() {
+
+  if (
+    !gameRunning ||
+    paused
+  ) {
+
+    return;
+  }
+
+
+  player.x -=
+    player.speed;
+
+
+  if (
+    player.x <
+    road.x
+  ) {
+
+    player.x =
+      road.x;
+  }
+}
+
+
+/* =========================
+   MOVE RIGHT
+========================= */
+
+function moveRight() {
+
+  if (
+    !gameRunning ||
+    paused
+  ) {
+
+    return;
+  }
+
+
+  player.x +=
+    player.speed;
+
+
+  if (
+    player.x +
+      player.width >
+    road.x +
+      road.width
+  ) {
+
+    player.x =
+      road.x +
+      road.width -
+      player.width;
+  }
+}
+
+
+/* =========================
+   KEYBOARD
+========================= */
 
 document.addEventListener(
   "keydown",
@@ -1078,73 +1553,9 @@ document.addEventListener(
 );
 
 
-// =========================
-// MOVE LEFT
-// =========================
-
-function moveLeft() {
-
-  if (
-    !gameRunning ||
-    paused
-  ) {
-
-    return;
-  }
-
-
-  player.x -=
-    player.speed;
-
-
-  if (
-    player.x <
-    road.x
-  ) {
-
-    player.x =
-      road.x;
-  }
-}
-
-
-// =========================
-// MOVE RIGHT
-// =========================
-
-function moveRight() {
-
-  if (
-    !gameRunning ||
-    paused
-  ) {
-
-    return;
-  }
-
-
-  player.x +=
-    player.speed;
-
-
-  if (
-    player.x +
-      player.width >
-    road.x +
-      road.width
-  ) {
-
-    player.x =
-      road.x +
-      road.width -
-      player.width;
-  }
-}
-
-
-// =========================
-// MOBILE CONTROLS
-// =========================
+/* =========================
+   MOBILE
+========================= */
 
 leftButton.addEventListener(
   "touchstart",
@@ -1155,6 +1566,7 @@ leftButton.addEventListener(
     moveLeft();
   }
 );
+
 
 rightButton.addEventListener(
   "touchstart",
@@ -1172,21 +1584,35 @@ leftButton.addEventListener(
   moveLeft
 );
 
+
 rightButton.addEventListener(
   "click",
   moveRight
 );
 
 
-// =========================
-// START BUTTON
-// =========================
+/* =========================
+   GAME BUTTON
+========================= */
 
 startButton.addEventListener(
   "click",
   () => {
 
-    if (!gameRunning) {
+    if (
+      startButton.textContent ===
+      "BACK TO MENU"
+    ) {
+
+      backToMenu();
+
+      return;
+    }
+
+
+    if (
+      !gameRunning
+    ) {
 
       startGame();
 
@@ -1198,9 +1624,9 @@ startButton.addEventListener(
 );
 
 
-// =========================
-// ENEMIES
-// =========================
+/* =========================
+   SPAWN ENEMIES
+========================= */
 
 setInterval(
   () => {
@@ -1218,9 +1644,9 @@ setInterval(
 );
 
 
-// =========================
-// COINS
-// =========================
+/* =========================
+   SPAWN COINS
+========================= */
 
 setInterval(
   () => {
@@ -1236,20 +1662,3 @@ setInterval(
   },
   1200
 );
-
-
-// =========================
-// INITIAL SCREEN
-// =========================
-
-scoreText.textContent =
-  "0";
-
-livesText.textContent =
-  "3";
-
-coinsText.textContent =
-  "0";
-
-highScoreText.textContent =
-  highScore;
