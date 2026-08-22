@@ -1,347 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <meta name="theme-color" content="#080b12">
-
-  <title>Traffic Dodge</title>
-
-  <link rel="stylesheet" href="./style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#05070d">
+<title>Traffic Dodge — V3</title>
+<link rel="stylesheet" href="./style.css">
 </head>
-
 <body>
+<div class="app-shell">
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
 
-  <div class="app">
+  <main id="menuScreen" class="menu-screen">
+    <header class="topbar">
+      <div class="logo"><span>TRAFFIC</span><b>DODGE</b></div>
+      <div class="best-pill">🏆 <strong id="menuHighScore">0</strong></div>
+    </header>
 
-    <!-- ================= MENU ================= -->
-
-    <main id="menuScreen" class="menu-screen">
-
-      <div class="top-bar">
-        <span class="version">TRAFFIC DODGE</span>
-
-        <div class="best-mini">
-          🏆 <span id="menuHighScore">0</span>
-        </div>
-      </div>
-
-
-      <section class="hero">
-
-        <div class="hero-car">
-          🚗
-        </div>
-
-        <div class="brand">
-          <span>TRAFFIC</span>
-          <strong>DODGE</strong>
-        </div>
-
-        <p>
-          Survive the traffic.
-          <br>
-          Chase the high score.
-        </p>
-
-      </section>
-
-
-      <!-- BEST SCORE -->
-
-      <section class="score-card">
-
-        <div class="score-icon">
-          🏆
-        </div>
-
-        <div class="score-info">
-
-          <span>BEST SCORE</span>
-
-          <strong id="menuBestScore">
-            0
-          </strong>
-
-        </div>
-
-        <div class="score-arrow">
-          ›
-        </div>
-
-      </section>
-
-
-      <!-- DIFFICULTY -->
-
-      <section class="difficulty-section">
-
-        <div class="section-title">
-
-          <span>DIFFICULTY</span>
-
-          <small>
-            Choose your challenge
-          </small>
-
-        </div>
-
-
-        <div class="difficulty-buttons">
-
-          <button
-            class="difficulty active"
-            data-level="easy">
-
-            <span class="difficulty-icon">
-              🌱
-            </span>
-
-            <span class="difficulty-text">
-              EASY
-              <small>Relaxed</small>
-            </span>
-
-          </button>
-
-
-          <button
-            class="difficulty"
-            data-level="normal">
-
-            <span class="difficulty-icon">
-              ⚡
-            </span>
-
-            <span class="difficulty-text">
-              NORMAL
-              <small>Balanced</small>
-            </span>
-
-          </button>
-
-
-          <button
-            class="difficulty"
-            data-level="hard">
-
-            <span class="difficulty-icon">
-              🔥
-            </span>
-
-            <span class="difficulty-text">
-              HARD
-              <small>Extreme</small>
-            </span>
-
-          </button>
-
-        </div>
-
-      </section>
-
-
-      <!-- PLAY -->
-
-      <button
-        id="playButton"
-        class="play-button">
-
-        <span>PLAY NOW</span>
-
-        <b>›</b>
-
-      </button>
-
-
-      <!-- HOW TO -->
-
-      <section class="how-to">
-
-        <div class="section-title">
-
-          <span>HOW TO PLAY</span>
-
-          <small>
-            Master the road
-          </small>
-
-        </div>
-
-
-        <div class="tips">
-
-          <div class="tip">
-            <span>⬅️</span>
-            <p>
-              <strong>MOVE</strong>
-              Dodge traffic
-            </p>
+    <section class="hero">
+      <div class="hero-glow"></div>
+      <div class="road-preview">
+        <div class="preview-road">
+          <i></i><i></i><i></i>
+          <div class="hero-car">
+            <div class="car-window"></div><div class="car-light l"></div><div class="car-light r"></div>
+            <div class="wheel w1"></div><div class="wheel w2"></div><div class="wheel w3"></div><div class="wheel w4"></div>
           </div>
-
-
-          <div class="tip">
-            <span>🪙</span>
-            <p>
-              <strong>COLLECT</strong>
-              Grab coins
-            </p>
-          </div>
-
-
-          <div class="tip">
-            <span>❤️</span>
-            <p>
-              <strong>SURVIVE</strong>
-              Save your lives
-            </p>
-          </div>
-
+          <div class="traffic-car t1"></div><div class="traffic-car t2"></div>
         </div>
-
-      </section>
-
-
-      <footer>
-        TRAFFIC DODGE • v1.0
-      </footer>
-
-    </main>
-
-
-    <!-- ================= GAME ================= -->
-
-    <main
-      id="gameScreen"
-      class="game-screen hidden">
-
-      <!-- GAME HEADER -->
-
-      <header class="game-header">
-
-        <div class="game-brand">
-          <span>TRAFFIC</span>
-          <strong>DODGE</strong>
-        </div>
-
-
-        <button
-          id="startButton"
-          class="pause-button">
-
-          ❚❚
-
-        </button>
-
-      </header>
-
-
-      <!-- HUD -->
-
-      <section class="hud">
-
-        <div class="hud-card">
-
-          <span>🏆 SCORE</span>
-
-          <strong id="score">
-            0
-          </strong>
-
-        </div>
-
-
-        <div class="hud-card lives-card">
-
-          <span>❤️ LIVES</span>
-
-          <strong id="lives">
-            3
-          </strong>
-
-        </div>
-
-
-        <div class="hud-card">
-
-          <span>🪙 COINS</span>
-
-          <strong id="coins">
-            0
-          </strong>
-
-        </div>
-
-      </section>
-
-
-      <div class="best-game">
-
-        BEST
-        <strong id="highScore">
-          0
-        </strong>
-
       </div>
-
-
-      <!-- GAME -->
-
-      <div class="canvas-wrapper">
-
-        <canvas
-          id="gameCanvas"
-          width="400"
-          height="600">
-        </canvas>
-
-
-        <div
-          id="countdown"
-          class="countdown hidden">
-
-          3
-
-        </div>
-
+      <div class="hero-copy">
+        <div class="eyebrow">ARCADE RACING • V3</div>
+        <h1>OWN THE<br><em>ROAD.</em></h1>
+        <p>Dodge traffic. Collect coins.<br>Beat your best run.</p>
       </div>
+    </section>
 
+    <section class="stats-row">
+      <div class="stat-card"><span>🏆</span><small>BEST SCORE</small><strong id="menuBestScore">0</strong></div>
+      <div class="stat-card"><span>🪙</span><small>YOUR COINS</small><strong id="menuCoins">0</strong></div>
+      <div class="stat-card"><span>🏁</span><small>MODE</small><strong id="menuMode">EASY</strong></div>
+    </section>
 
-      <!-- CONTROLS -->
-
-      <div class="mobile-controls">
-
-        <button
-          id="leftButton"
-          class="control-button">
-
-          <span>‹</span>
-
-        </button>
-
-
-        <div class="control-label">
-          STEER
-        </div>
-
-
-        <button
-          id="rightButton"
-          class="control-button">
-
-          <span>›</span>
-
-        </button>
-
+    <section class="difficulty-section">
+      <div class="section-head"><div><span>SELECT MODE</span><small>How brave are you?</small></div></div>
+      <div class="difficulty-buttons">
+        <button class="difficulty active" data-level="easy"><b>🌱</b><span>EASY</span><small>CHILL RIDE</small></button>
+        <button class="difficulty" data-level="normal"><b>⚡</b><span>NORMAL</span><small>FULL SPEED</small></button>
+        <button class="difficulty" data-level="hard"><b>🔥</b><span>HARD</span><small>NO MERCY</small></button>
       </div>
+    </section>
 
-    </main>
+    <button id="playButton" class="play-button"><span>START RUN</span><b>→</b></button>
 
-  </div>
+    <section class="howto">
+      <div class="section-head"><div><span>QUICK GUIDE</span><small>Survive as long as you can</small></div></div>
+      <div class="guide-row">
+        <div><b>← →</b><span>STEER</span></div>
+        <div><b>🪙</b><span>COLLECT</span></div>
+        <div><b>❤️</b><span>3 LIVES</span></div>
+      </div>
+    </section>
+    <footer>TRAFFIC DODGE <i>•</i> V3.0</footer>
+  </main>
 
+  <main id="gameScreen" class="game-screen hidden">
+    <header class="game-topbar">
+      <div class="logo mini"><span>TRAFFIC</span><b>DODGE</b></div>
+      <div class="run-badge"><span>RUN</span><strong id="runMode">EASY</strong></div>
+      <button id="startButton" class="pause-button" aria-label="Pause">Ⅱ</button>
+    </header>
 
-  <script src="./game.js"></script>
+    <section class="game-hud">
+      <div class="hud-card score"><small>SCORE</small><strong id="score">0</strong><i>+</i></div>
+      <div class="hud-card lives"><small>LIVES</small><div id="lifeIcons"><b>♥</b><b>♥</b><b>♥</b></div></div>
+      <div class="hud-card coins"><small>COINS</small><strong>🪙 <span id="coins">0</span></strong></div>
+    </section>
 
+    <div class="best-strip">BEST <strong id="highScore">0</strong></div>
+
+    <div class="canvas-frame">
+      <div class="canvas-glow"></div>
+      <canvas id="gameCanvas" width="400" height="600"></canvas>
+      <div id="countdown" class="countdown hidden">3</div>
+    </div>
+
+    <div class="controls">
+      <button id="leftButton" class="control-button"><span>‹</span><small>LEFT</small></button>
+      <div class="steer-center"><i></i><span>STEER</span><i></i></div>
+      <button id="rightButton" class="control-button"><span>›</span><small>RIGHT</small></button>
+    </div>
+    <div class="desktop-tip">USE <b>←</b> <b>→</b> TO STEER <i>•</i> SPACE TO PAUSE</div>
+  </main>
+</div>
+<script src="./game.js"></script>
 </body>
 </html>
