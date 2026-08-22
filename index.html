@@ -1,98 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<meta name="theme-color" content="#05070d">
-<title>Traffic Dodge — V3</title>
-<link rel="stylesheet" href="./style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#03060c">
+<title>Traffic Dodge V3</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="app-shell">
-  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
-
-  <main id="menuScreen" class="menu-screen">
-    <header class="topbar">
-      <div class="logo"><span>TRAFFIC</span><b>DODGE</b></div>
-      <div class="best-pill">🏆 <strong id="menuHighScore">0</strong></div>
+<div id="app">
+  <section id="menuScreen" class="screen">
+    <header class="top">
+      <div class="brand"><span>TRAFFIC</span><b>DODGE</b><i>V3</i></div>
+      <div class="wallet">🪙 <strong id="menuCoins">0</strong></div>
     </header>
 
-    <section class="hero">
-      <div class="hero-glow"></div>
-      <div class="road-preview">
-        <div class="preview-road">
-          <i></i><i></i><i></i>
-          <div class="hero-car">
-            <div class="car-window"></div><div class="car-light l"></div><div class="car-light r"></div>
-            <div class="wheel w1"></div><div class="wheel w2"></div><div class="wheel w3"></div><div class="wheel w4"></div>
-          </div>
-          <div class="traffic-car t1"></div><div class="traffic-car t2"></div>
-        </div>
-      </div>
-      <div class="hero-copy">
-        <div class="eyebrow">ARCADE RACING • V3</div>
-        <h1>OWN THE<br><em>ROAD.</em></h1>
-        <p>Dodge traffic. Collect coins.<br>Beat your best run.</p>
-      </div>
-    </section>
-
-    <section class="stats-row">
-      <div class="stat-card"><span>🏆</span><small>BEST SCORE</small><strong id="menuBestScore">0</strong></div>
-      <div class="stat-card"><span>🪙</span><small>YOUR COINS</small><strong id="menuCoins">0</strong></div>
-      <div class="stat-card"><span>🏁</span><small>MODE</small><strong id="menuMode">EASY</strong></div>
-    </section>
-
-    <section class="difficulty-section">
-      <div class="section-head"><div><span>SELECT MODE</span><small>How brave are you?</small></div></div>
-      <div class="difficulty-buttons">
-        <button class="difficulty active" data-level="easy"><b>🌱</b><span>EASY</span><small>CHILL RIDE</small></button>
-        <button class="difficulty" data-level="normal"><b>⚡</b><span>NORMAL</span><small>FULL SPEED</small></button>
-        <button class="difficulty" data-level="hard"><b>🔥</b><span>HARD</span><small>NO MERCY</small></button>
-      </div>
-    </section>
-
-    <button id="playButton" class="play-button"><span>START RUN</span><b>→</b></button>
-
-    <section class="howto">
-      <div class="section-head"><div><span>QUICK GUIDE</span><small>Survive as long as you can</small></div></div>
-      <div class="guide-row">
-        <div><b>← →</b><span>STEER</span></div>
-        <div><b>🪙</b><span>COLLECT</span></div>
-        <div><b>❤️</b><span>3 LIVES</span></div>
-      </div>
-    </section>
-    <footer>TRAFFIC DODGE <i>•</i> V3.0</footer>
-  </main>
-
-  <main id="gameScreen" class="game-screen hidden">
-    <header class="game-topbar">
-      <div class="logo mini"><span>TRAFFIC</span><b>DODGE</b></div>
-      <div class="run-badge"><span>RUN</span><strong id="runMode">EASY</strong></div>
-      <button id="startButton" class="pause-button" aria-label="Pause">Ⅱ</button>
-    </header>
-
-    <section class="game-hud">
-      <div class="hud-card score"><small>SCORE</small><strong id="score">0</strong><i>+</i></div>
-      <div class="hud-card lives"><small>LIVES</small><div id="lifeIcons"><b>♥</b><b>♥</b><b>♥</b></div></div>
-      <div class="hud-card coins"><small>COINS</small><strong>🪙 <span id="coins">0</span></strong></div>
-    </section>
-
-    <div class="best-strip">BEST <strong id="highScore">0</strong></div>
-
-    <div class="canvas-frame">
-      <div class="canvas-glow"></div>
-      <canvas id="gameCanvas" width="400" height="600"></canvas>
-      <div id="countdown" class="countdown hidden">3</div>
+    <div class="hero">
+      <div class="city"></div><div class="hero-road"></div>
+      <div class="hero-car"><span class="window"></span><i class="wheel a"></i><i class="wheel b"></i><i class="wheel c"></i><i class="wheel d"></i></div>
+      <div class="hero-title"><small>ARCADE RACING • TRAFFIC SURVIVAL</small><h1>OWN THE<br><em>ROAD.</em></h1><p>DODGE TRAFFIC. COLLECT COINS. BEAT YOUR BEST.</p></div>
     </div>
 
+    <div class="scorebar">
+      <div><small>🏆 BEST SCORE</small><strong id="menuHighScore">0</strong></div>
+      <div><small>🪙 TOTAL COINS</small><strong id="menuTotalCoins">0</strong></div>
+    </div>
+
+    <div class="heading"><b>CHOOSE DIFFICULTY</b><span>How brave are you?</span></div>
+    <div class="difficulty">
+      <button class="difficulty-btn active" data-level="easy"><strong>🌱 EASY</strong><small>CHILL RIDE</small><i>★☆☆</i></button>
+      <button class="difficulty-btn" data-level="normal"><strong>⚡ NORMAL</strong><small>FULL SPEED</small><i>★★☆</i></button>
+      <button class="difficulty-btn" data-level="hard"><strong>🔥 HARD</strong><small>NO MERCY</small><i>★★★</i></button>
+    </div>
+
+    <button id="playButton" class="start">▶ <span>START RUN</span><b>»</b></button>
+
+    <div class="heading guide-head"><b>HOW TO PLAY</b><span>Stay alive. Stay on top.</span></div>
+    <div class="guide">
+      <div><strong>← →</strong><small>STEER</small></div>
+      <div><strong>🪙</strong><small>COLLECT COINS</small></div>
+      <div><strong>❤️❤️❤️</strong><small>3 LIVES</small></div>
+    </div>
+    <footer>TRAFFIC DODGE • V3.0</footer>
+  </section>
+
+  <section id="gameScreen" class="screen hidden">
+    <header class="game-top">
+      <div class="brand mini"><span>TRAFFIC</span><b>DODGE</b></div>
+      <div class="game-stat"><small>SCORE</small><strong id="score">0</strong></div>
+      <div class="game-stat"><small>LIVES</small><strong id="lives">❤️❤️❤️</strong></div>
+      <div class="game-stat"><small>COINS</small><strong>🪙 <span id="coins">0</span></strong></div>
+      <button id="pauseButton" class="pause">Ⅱ</button>
+    </header>
+    <div class="best">BEST <strong id="highScore">0</strong> • <span id="modeText">EASY</span></div>
+    <div class="canvas-wrap"><canvas id="gameCanvas" width="400" height="600"></canvas></div>
     <div class="controls">
-      <button id="leftButton" class="control-button"><span>‹</span><small>LEFT</small></button>
-      <div class="steer-center"><i></i><span>STEER</span><i></i></div>
-      <button id="rightButton" class="control-button"><span>›</span><small>RIGHT</small></button>
+      <button id="leftButton">‹<small>LEFT</small></button>
+      <div class="steer">STEER</div>
+      <button id="rightButton"><small>RIGHT</small>›</button>
     </div>
-    <div class="desktop-tip">USE <b>←</b> <b>→</b> TO STEER <i>•</i> SPACE TO PAUSE</div>
-  </main>
+    <div class="key-tip">← → STEER <b>•</b> SPACE PAUSE</div>
+  </section>
 </div>
-<script src="./game.js"></script>
+<script src="game.js"></script>
 </body>
 </html>
